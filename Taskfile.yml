@@ -1,0 +1,16 @@
+version: '3'
+
+tasks:
+  list:
+    desc: List all tasks
+    cmds:
+    - task --list
+    silent: true
+  run:
+    desc: Tidy, test and run the current directory
+    cmds:
+    - go mod tidy
+    - go test
+    - go run .
+    dir: '{{.USER_WORKING_DIR}}'
+    silent: true
