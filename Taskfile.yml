@@ -9,6 +9,7 @@ tasks:
   run:
     desc: Tidy, test and run the current directory
     cmds:
+    - gofmt -w .
     - go mod tidy
     - go test
     - go run .

@@ -1,9 +1,9 @@
 package main
 
 import (
+	"example/greetings"
 	"fmt"
 	"log"
-	"example/greetings"
 )
 
 func main() {
@@ -13,5 +13,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-    fmt.Println(message)
+	fmt.Println(message)
 }
