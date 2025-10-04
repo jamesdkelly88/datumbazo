@@ -5,11 +5,13 @@ import (
 	"runtime"
 )
 
-const name = "Datumbazo"
-const major int = 0
-const minor int = 0
-const patch int = 1
-const suffix string = "-alpha"
+const (
+	name          = "Datumbazo"
+	major  int    = 0
+	minor  int    = 0
+	patch  int    = 1
+	suffix string = "-alpha"
+)
 
 type Version struct {
 	Major  int
