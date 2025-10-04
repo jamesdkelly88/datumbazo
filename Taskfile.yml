@@ -1,17 +1,84 @@
 version: '3'
 
 tasks:
+
+  # Task
+
+  hello:
+    cmds:
+      - echo "Hello from task"
+
   list:
     desc: List all tasks
     cmds:
     - task --list
     silent: true
+
+  # Project
+
+  build:
+    desc: Build the entire project
+    aliases:
+    - b
+    cmds:
+    - task: int_prep
+    - task: int_build
+      vars: { EXE: 'datumbazo' }
+    - task: int_build
+      vars: { EXE: 'dbzo' }
+
+  build-client:
+    desc: Build the client
+    aliases:
+    - bc
+    - build-cli
+    - cli
+    cmds:
+    - task: int_prep
+    - task: int_build
+      vars: { EXE: 'dbzo' }
+  build-server:
+    desc: Build the server
+    aliases:
+    - bs
+    - build-srv
+    - srv
+    cmds:
+    - task: int_prep
+    - task: int_build
+      vars: { EXE: 'datumbazo' }
+
+  
+  # Samples
   run:
     desc: Tidy, test and run the current directory
     cmds:
     - gofmt -w .
     - go mod tidy
-    - go test
+    - go test -cover
     - go run .
     dir: '{{.USER_WORKING_DIR}}'
+    silent: true
+
+  # Internal  
+  int_prep:
+    desc: Prepare the code for build
+    internal: true
+    cmds:
+    - echo 'Formatting source code'
+    - gofmt -w .
+    - echo 'Updating dependencies'
+    - go mod tidy
+    - echo 'Running tests'
+    - go test -cover ./...
+    silent: true
+  
+  int_build:
+    desc: Build the code
+    internal: true
+    cmds:
+    - echo 'Building {{.EXE}}'
+    - go build ./cmd/{{.EXE}}
+    requires:
+      vars: [ EXE ]
     silent: true

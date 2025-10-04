@@ -60,4 +60,3 @@ func ReadBytesFromFileOffset(path string, number int, offset int64) {
 	fmt.Printf("Read %d bytes from offset %d:\n%s\n", n1, o1, string(b1[:n1]))
 
 }
-

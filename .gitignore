@@ -1,0 +1,10 @@
+# executables
+datumbazo
+!datumbazo/
+datumbazo.exe
+dbzo
+!dbzo/
+dbzo.exe
+
+# mac
+.DS_Store
