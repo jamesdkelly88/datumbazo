@@ -8,3 +8,7 @@ dbzo.exe
 
 # mac
 .DS_Store
+
+# go
+coverage.out
+coverage.tmp

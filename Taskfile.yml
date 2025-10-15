@@ -48,6 +48,14 @@ tasks:
     - task: int_build
       vars: { EXE: 'datumbazo' }
 
+  test:
+    desc: Run tests on the project
+    cmds:
+    - echo 'Running tests'
+    - go test -v -coverprofile=coverage.tmp -cover ./...
+    - cat coverage.tmp | grep -v "main.go" > coverage.out
+    - go tool cover -html=coverage.out
+    silent: true
   
   # Samples
   run:
@@ -69,8 +77,7 @@ tasks:
     - gofmt -w .
     - echo 'Updating dependencies'
     - go mod tidy
-    - echo 'Running tests'
-    - go test -cover ./...
+    - task: test
     silent: true
   
   int_build:

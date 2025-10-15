@@ -19,19 +19,8 @@ func main() {
 	settings = dbzo.NewSettings()
 	version = dbzo.GetVersion(true)
 	http.HandleFunc("/favicon.ico", faviconHandler)
+	http.HandleFunc("/health-check", HealthCheckHandler)
 	http.HandleFunc("/version", versionHandler)
 	http.HandleFunc("/", unmappedHandler)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", settings.Server.Port), nil))
-}
-
-func faviconHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFileFS(w, r, embedded, "favicon.ico")
-}
-
-func unmappedHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Unmapped path: %s", r.URL.RequestURI())
-}
-
-func versionHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, version.Full)
 }
