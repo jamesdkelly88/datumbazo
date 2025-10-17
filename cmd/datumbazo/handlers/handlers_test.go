@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/config"
 )
 
 // TODO: convert to table of tests since they're all the same
@@ -20,12 +22,12 @@ func TestFaviconHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(faviconHandler)
+	handler := http.HandlerFunc(FaviconHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
-	expected, _ := embedded.ReadFile("favicon.ico")
+	expected, _ := config.Embedded.ReadFile("favicon.ico")
 
 	// TODO: base64 string for favicon
 
@@ -77,7 +79,7 @@ func TestVersionHander(t *testing.T) {
 		t.Fatal(err)
 	}
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(versionHandler)
+	handler := http.HandlerFunc(VersionHandler)
 	handler.ServeHTTP(rr, req)
 	wantStatus := http.StatusOK
 	gotStatus := rr.Code

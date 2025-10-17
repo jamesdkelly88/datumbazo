@@ -1,7 +1,8 @@
 package middleware
 
 import (
-	"fmt"
+	"context"
+	// "fmt"
 	"github.com/jamesdkelly88/datumbazo/pkg/dbzo"
 	"net/http"
 )
@@ -11,11 +12,14 @@ func BasicAuth(next http.Handler) http.Handler {
 		username, _, ok := r.BasicAuth()
 		// username, password, ok := r.BasicAuth()
 		if ok {
-			fmt.Printf("Checking permissions for %s\n", username)
-			user, err := dbzo.GetUser(username)
+			// fmt.Printf("Checking permissions for %s\n", username)
+			_, err := dbzo.GetUser(username)
+			// user, err := dbzo.GetUser(username)
 			if err == nil {
-				fmt.Printf("User authorised - permissions are level %d\n", user.Permissions)
-				next.ServeHTTP(w, r)
+				// fmt.Printf("User authorised - permissions are level %d\n", user.Permissions)
+				ctx := context.WithValue(r.Context(), "UserId", username)
+				req := r.WithContext(ctx)
+				next.ServeHTTP(w, req)
 				return
 			}
 		}
