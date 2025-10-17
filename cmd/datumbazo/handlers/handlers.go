@@ -16,7 +16,7 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `{"alive": true}`)
 }
 
-func unmappedHandler(w http.ResponseWriter, r *http.Request) {
+func UnmappedHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Unmapped path: %s", r.URL.RequestURI())
 }
 

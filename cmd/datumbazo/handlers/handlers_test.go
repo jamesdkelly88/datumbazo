@@ -1,94 +1,58 @@
 package handlers
 
 import (
-	"bytes"
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/config"
 )
 
-// TODO: convert to table of tests since they're all the same
-// request path
-// response code
-// body
-// text or base64 of bytes
+// TODO: handle arguments, auth
 
-func TestFaviconHandler(t *testing.T) {
-	req, err := http.NewRequest("GET", "/favicon.ico", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(FaviconHandler)
-	handler.ServeHTTP(rr, req)
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
-	}
-	expected, _ := config.Embedded.ReadFile("favicon.ico")
+var favicon, _ = config.Embedded.ReadFile("favicon.ico")
 
-	// TODO: base64 string for favicon
-
-	if !bytes.Equal(rr.Body.Bytes(), expected) {
-		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
-	}
+var handlerTests = []struct {
+	name string
+	method string
+	path string
+	function http.HandlerFunc
+	responseCode int
+	expected string
+	base64 bool
+}{
+	{"favicon","GET","/favicon.ico",FaviconHandler,200,base64.StdEncoding.EncodeToString(favicon),true},
+	{"health-check","GET","/health-check",HealthCheckHandler,200,`{"alive": true}`,false},
+	{"unmapped","GET","/banana",UnmappedHandler,200,"Unmapped path: /banana",false},
+	{"v1-good","GET","/",RootHandler1,200,"Using v1 api",false},
+	{"v1-bad","GET","/test",RootHandler1,404,"404 page not found\n",false},
+	{"v2-good","GET","/",RootHandler2,200,"Using v2 api",false},
+	{"v2-bad","GET","/test",RootHandler2,404,"404 page not found\n",false},
+	{"version","GET","/version",VersionHandler,200,config.Version.Full,false},
 }
-
-func TestHealthCheckHandler(t *testing.T) {
-	req, err := http.NewRequest("GET", "/health-check", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(HealthCheckHandler)
-	handler.ServeHTTP(rr, req)
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
-	}
-	expected := `{"alive": true}`
-	if rr.Body.String() != expected {
-		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
-	}
-}
-
-func TestUnmappedHandler(t *testing.T) {
-	req, err := http.NewRequest("GET", "/banana", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(unmappedHandler)
-	handler.ServeHTTP(rr, req)
-	wantStatus := http.StatusOK
-	gotStatus := rr.Code
-	if wantStatus != gotStatus {
-		t.Errorf("handler returned wrong status code: got %v want %v", gotStatus, wantStatus)
-	}
-	wantBody := `Unmapped path: /banana`
-	gotBody := rr.Body.String()
-	if wantBody != gotBody {
-		t.Errorf("handler returned unexpected body: got %v want %v", gotBody, wantBody)
-	}
-}
-
-func TestVersionHander(t *testing.T) {
-	req, err := http.NewRequest("GET", "/version", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(VersionHandler)
-	handler.ServeHTTP(rr, req)
-	wantStatus := http.StatusOK
-	gotStatus := rr.Code
-	if wantStatus != gotStatus {
-		t.Errorf("handler returned wrong status code: got %v want %v", gotStatus, wantStatus)
-	}
-	wantBody := "Datumbazo Server"
-	gotBody := rr.Body.String()
-	if !strings.HasPrefix(gotBody, wantBody) {
-		t.Errorf("handler returned unexpected body: got %v want %v", gotBody, wantBody)
+func TestHandlers(t *testing.T) {
+	for _, h := range handlerTests {
+		t.Run(h.name, func(t *testing.T) {
+			req, err := http.NewRequest(h.method, h.path, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(h.function)
+			handler.ServeHTTP(rr, req)
+			if status := rr.Code; status != h.responseCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, h.responseCode)
+			}
+			var received string
+			if h.base64 {
+				received = base64.StdEncoding.EncodeToString(rr.Body.Bytes())
+			} else {
+				received = rr.Body.String()
+			}
+			if received != h.expected {
+				t.Errorf("handler returned unexpected body: got %v want %v", received, h.expected)
+			}
+		})
 	}
 }
