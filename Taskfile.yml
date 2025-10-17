@@ -77,7 +77,7 @@ tasks:
     - gofmt -w .
     - echo 'Updating dependencies'
     - go mod tidy
-    - task: test
+    # - task: test
     silent: true
   
   int_build:

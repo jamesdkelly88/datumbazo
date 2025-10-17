@@ -1,26 +1,58 @@
 package main
 
 import (
-	"embed"
 	"fmt"
-	"log"
+	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/config"
+	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/handlers"
+	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/middleware"
 	"net/http"
-
-	"github.com/jamesdkelly88/datumbazo/pkg/dbzo"
 )
 
-//go:embed favicon.ico
-
-var embedded embed.FS
-var settings dbzo.Settings
-var version dbzo.Version
-
 func main() {
-	settings = dbzo.NewSettings()
-	version = dbzo.GetVersion(true)
-	http.HandleFunc("/favicon.ico", faviconHandler)
-	http.HandleFunc("/health-check", HealthCheckHandler)
-	http.HandleFunc("/version", versionHandler)
-	http.HandleFunc("/", unmappedHandler)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", settings.Server.Port), nil))
+
+	// define routes
+	public := RouteList{
+		"GET /favicon.ico":  handlers.FaviconHandler,
+		"GET /health-check": handlers.HealthCheckHandler,
+	}
+	private := RouteList{
+		"GET /version": handlers.VersionHandler,
+	}
+	v1routes := RouteList{
+		"GET /": handlers.RootHandler1,
+	}
+	v2routes := RouteList{
+		"GET /": handlers.RootHandler2,
+	}
+
+	// define main router
+	router := http.NewServeMux()
+
+	// define versioned api routers and prefixes
+	v1 := http.NewServeMux()
+	router.Handle("/v1/", http.StripPrefix("/v1", v1))
+	v2 := http.NewServeMux()
+	router.Handle("/v2/", http.StripPrefix("/v2", v2))
+
+	// define middleware stack (without auth)
+	stack := middleware.CreateStack(
+		middleware.Logging,
+	)
+
+	// load routes
+	addRoutes(router, stack, public, private)
+	addRoutes(v1, stack, RouteList{}, v1routes)
+	addRoutes(v2, stack, RouteList{}, v2routes)
+
+	// define listen address
+	address := fmt.Sprintf(":%d", config.Settings.Server.Port)
+
+	// define server
+	server := http.Server{
+		Addr:    address,
+		Handler: router,
+	}
+	// start server
+	fmt.Printf("Starting server on %s\n", address)
+	server.ListenAndServe()
 }
