@@ -24,10 +24,10 @@ func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		userId, ok := r.Context().Value("UserId").(string)
+		username, _, ok := r.BasicAuth()
 
 		if !ok {
-			userId = "-"
+			username = "-"
 		}
 
 		wrapped := &wrappedWriter{
@@ -35,6 +35,6 @@ func Logging(next http.Handler) http.Handler {
 			statusCode:     http.StatusOK,
 		}
 		next.ServeHTTP(wrapped, r)
-		fmt.Println(wrapped.statusCode, r.Method, r.URL.Path, userId, time.Since(start))
+		fmt.Println(wrapped.statusCode, r.Method, r.URL.Path, username, time.Since(start))
 	})
 }

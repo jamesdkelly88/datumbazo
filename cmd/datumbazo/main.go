@@ -2,50 +2,33 @@ package main
 
 import (
 	"fmt"
-	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/config"
 	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/handlers"
-	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/middleware"
+	"github.com/jamesdkelly88/datumbazo/internal/config"
+	"github.com/jamesdkelly88/datumbazo/internal/middleware"
 	"net/http"
 )
 
 func main() {
-
-	// define routes
-	public := RouteList{
-		"GET /favicon.ico":  handlers.FaviconHandler,
-		"GET /health-check": handlers.HealthCheckHandler,
-	}
-	private := RouteList{
-		"GET /version": handlers.VersionHandler,
-	}
-	v1routes := RouteList{
-		"GET /": handlers.RootHandler1,
-	}
-	v2routes := RouteList{
-		"GET /": handlers.RootHandler2,
-	}
+	cfg := config.NewSettings(true)
 
 	// define main router
 	router := http.NewServeMux()
 
-	// define versioned api routers and prefixes
-	v1 := http.NewServeMux()
-	router.Handle("/v1/", http.StripPrefix("/v1", v1))
-	v2 := http.NewServeMux()
-	router.Handle("/v2/", http.StripPrefix("/v2", v2))
+	// Create a base middleware chain
+	baseChain := middleware.Chain{middleware.Logging}
 
-	// define middleware stack (without auth)
-	stack := middleware.CreateStack(
-		middleware.Logging,
-	)
+	// Extend the base chain with basic auth
+	authChain := append(baseChain, middleware.BasicAuth)
 
-	// load routes
-	addRoutes(router, stack, public, private)
-	addRoutes(v1, stack, RouteList{}, v1routes)
-	addRoutes(v2, stack, RouteList{}, v2routes)
+	// define routes
+	router.Handle("GET /favicon.ico", baseChain.ThenFunc(handlers.FaviconHandler))
+	router.Handle("GET /health-check", baseChain.ThenFunc(handlers.HealthCheckHandler))
+	router.Handle("GET /version", authChain.ThenFunc(handlers.VersionHandler(cfg.Version)))
+	router.Handle("/v1/", authChain.ThenFunc(handlers.RootHandler1))
+	router.Handle("/v2/", authChain.ThenFunc(handlers.RootHandler2))
 
 	// define listen address
-	address := fmt.Sprintf(":%d", config.Settings.Server.Port)
+	address := fmt.Sprintf(":%d", cfg.Server.Port)
 
 	// define server
 	server := http.Server{

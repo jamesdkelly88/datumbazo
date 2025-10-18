@@ -1,13 +1,18 @@
 package handlers
 
 import (
+	"embed"
 	"fmt"
-	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/config"
 	"net/http"
+
+	"github.com/jamesdkelly88/datumbazo/internal/config"
 )
 
+//go:embed favicon.ico
+var Embedded embed.FS
+
 func FaviconHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFileFS(w, r, config.Embedded, "favicon.ico")
+	http.ServeFileFS(w, r, Embedded, "favicon.ico")
 }
 
 func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,23 +26,29 @@ func UnmappedHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RootHandler1(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
+	// if r.URL.Path != "/" {
+	// 	http.NotFound(w, r)
+	// 	return
+	// }
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "Using v1 api")
 }
 
 func RootHandler2(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
+	// if r.URL.Path != "/" {
+	// 	http.NotFound(w, r)
+	// 	return
+	// }
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "Using v2 api")
 }
 
-func VersionHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, config.Version.Full)
+// func VersionHandler(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Fprint(w, config.Version.Full)
+// }
+
+func VersionHandler(ver config.Version) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, ver.Full)
+	}
 }

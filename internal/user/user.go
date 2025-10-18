@@ -1,4 +1,4 @@
-package dbzo
+package user
 
 import (
 	"errors"

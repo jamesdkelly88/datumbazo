@@ -1,4 +1,4 @@
-package dbzo
+package config
 
 import (
 	"regexp"

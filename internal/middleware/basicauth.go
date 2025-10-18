@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 	// "fmt"
-	"github.com/jamesdkelly88/datumbazo/pkg/dbzo"
+	"github.com/jamesdkelly88/datumbazo/internal/user"
 	"net/http"
 )
 
@@ -13,8 +13,8 @@ func BasicAuth(next http.Handler) http.Handler {
 		// username, password, ok := r.BasicAuth()
 		if ok {
 			// fmt.Printf("Checking permissions for %s\n", username)
-			_, err := dbzo.GetUser(username)
-			// user, err := dbzo.GetUser(username)
+			_, err := user.GetUser(username)
+			// user, err := user.GetUser(username)
 			if err == nil {
 				// fmt.Printf("User authorised - permissions are level %d\n", user.Permissions)
 				ctx := context.WithValue(r.Context(), "UserId", username)
