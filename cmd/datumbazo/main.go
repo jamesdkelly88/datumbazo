@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/jamesdkelly88/datumbazo/cmd/datumbazo/handlers"
 	"github.com/jamesdkelly88/datumbazo/internal/config"
 	"github.com/jamesdkelly88/datumbazo/internal/middleware"
-	"net/http"
 )
 
 func main() {
@@ -27,15 +28,12 @@ func main() {
 	router.Handle("/v1/", authChain.ThenFunc(handlers.RootHandler1))
 	router.Handle("/v2/", authChain.ThenFunc(handlers.RootHandler2))
 
-	// define listen address
-	address := fmt.Sprintf(":%d", cfg.Server.Port)
-
 	// define server
 	server := http.Server{
-		Addr:    address,
+		Addr:    cfg.Server.Listen,
 		Handler: router,
 	}
 	// start server
-	fmt.Printf("Starting server on %s\n", address)
+	fmt.Printf("Starting server on %s\n", cfg.Server.Listen)
 	server.ListenAndServe()
 }

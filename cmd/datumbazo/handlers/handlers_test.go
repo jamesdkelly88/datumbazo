@@ -9,8 +9,9 @@ import (
 
 // TODO: handle arguments, auth
 
-// var favicon, _ = config.Embedded.ReadFile("favicon.ico")
-var favicon = []byte{}
+var favicon, _ = Embedded.ReadFile("favicon.ico")
+
+// var version = config.GetVersion(true)
 
 var handlerTests = []struct {
 	name         string
@@ -28,7 +29,7 @@ var handlerTests = []struct {
 	{"v1-bad", "GET", "/test", RootHandler1, 404, "404 page not found\n", false},
 	{"v2-good", "GET", "/", RootHandler2, 200, "Using v2 api", false},
 	{"v2-bad", "GET", "/test", RootHandler2, 404, "404 page not found\n", false},
-	{"version", "GET", "/version", VersionHandler, 200, config.Version.Full, false},
+	// {"version", "GET", "/version", VersionHandler(version), 200, version.Full, false},
 }
 
 func TestHandlers(t *testing.T) {

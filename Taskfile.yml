@@ -52,8 +52,8 @@ tasks:
     desc: Run tests on the project
     cmds:
     - echo 'Running tests'
-    - go test -v -coverprofile=coverage.tmp -cover ./... || true
-    - cat coverage.tmp | grep -v "main.go" > coverage.out
+    - go test -v -coverprofile=coverage.out -cover ./... || true
+    # - cat coverage.tmp | grep -v "main.go" > coverage.out
     - go tool cover -html=coverage.out
     silent: true
   
