@@ -7,6 +7,7 @@ tasks:
   hello:
     cmds:
       - echo "Hello from task"
+    silent: true
 
   list:
     desc: List all tasks
@@ -26,6 +27,7 @@ tasks:
       vars: { EXE: 'datumbazo' }
     - task: int_build
       vars: { EXE: 'dbzo' }
+    - task: report
 
   build-client:
     desc: Build the client
@@ -49,17 +51,42 @@ tasks:
       vars: { EXE: 'datumbazo' }
 
   test:
-    desc: Run tests on the project
+    desc: Run tests on the project (always succeeds)
+    cmds:
+    - echo 'Running unit tests'
+    - go test -json -v -coverprofile=coverage.out -cover ./... > results.json || echo 'Unit tests failed'
+    - echo 'Running static check'
+    - $(go env GOPATH)/bin/staticcheck -checks=all,-ST1000,-U1000 ./... || echo 'Static checks failed'
+    - echo 'Running vulnerability check'
+    - $(go env GOPATH)/bin/govulncheck ./... || echo 'Vulnerability checks failed'
+    silent: true
+
+  test_and_fail:
     cmds:
     - echo 'Running tests'
-    - go test -v -coverprofile=coverage.out -cover ./... || true
-    # - cat coverage.tmp | grep -v "main.go" > coverage.out
+    - go test -json -v -coverprofile=coverage.out -cover ./... > results.json
+    - echo 'Running static check'
+    - $(go env GOPATH)/bin/staticcheck -checks=all,-ST1000,-U1000 ./...
+    - echo 'Running vulnerability check'
+    - $(go env GOPATH)/bin/govulncheck ./...
+    silent: true
+
+  report:
+    desc: Show test reports
+    cmds:
+    - echo 'Generating unit test report'
+    - cat results.json | $(go env GOPATH)/bin/go-test-report -g 1 -t datumbazo
+    - echo "Showing unit test report"
+    - open test_report.html
+    - echo 'Showing coverage report'
     - go tool cover -html=coverage.out
+    - echo 'Showing report card'
+    - open https://goreportcard.com/report/github.com/jamesdkelly88/datumbazo
     silent: true
   
   # Samples
-  run:
-    desc: Tidy, test and run the current directory
+  sample:
+    desc: Tidy, test and run the current sample sub-directory
     cmds:
     - gofmt -w .
     - go mod tidy
@@ -67,17 +94,25 @@ tasks:
     - go run .
     dir: '{{.USER_WORKING_DIR}}'
     silent: true
+    preconditions:
+    - sh '[[ "$PWD" =~ samples/ ]]'
+
 
   # Internal  
   int_prep:
     desc: Prepare the code for build
     internal: true
     cmds:
+    - task: int_tools
     - echo 'Formatting source code'
-    - gofmt -w .
+    - gofmt -w -l .
     - echo 'Updating dependencies'
-    - go mod tidy
-    # - task: test
+    - go mod tidy -diff
+    - echo 'Verifying module'
+    - go mod verify
+    - echo 'Vetting code'
+    - go vet ./...
+    - task: test
     silent: true
   
   int_build:
@@ -88,4 +123,17 @@ tasks:
     - go build ./cmd/{{.EXE}}
     requires:
       vars: [ EXE ]
+    silent: true
+
+  int_tools:
+    desc: Get required tools
+    # internal: true
+    cmds:
+    - echo "Installing/updating go-test-report"
+    - go install github.com/vakenbolt/go-test-report@latest
+    - echo "Installing/updating staticcheck"
+    - go install honnef.co/go/tools/cmd/staticcheck@latest
+    - echo "Installing/updating govulncheck"
+    - go install golang.org/x/vuln/cmd/govulncheck@latest
+    dir: /
     silent: true

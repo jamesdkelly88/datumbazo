@@ -12,3 +12,5 @@ dbzo.exe
 # go
 coverage.out
 coverage.tmp
+results.json
+test_report.html
