@@ -23,6 +23,7 @@ tasks:
     - b
     cmds:
     - task: int_prep
+    - task: test
     - task: int_build
       vars: { EXE: 'datumbazo' }
     - task: int_build
@@ -50,25 +51,19 @@ tasks:
     - task: int_build
       vars: { EXE: 'datumbazo' }
 
-  test:
+  test_and_pass:
     desc: Run tests on the project (always succeeds)
+    aliases:
+    - test
     cmds:
-    - echo 'Running unit tests'
-    - go test -json -v -coverprofile=coverage.out -cover ./... > results.json || echo 'Unit tests failed'
-    - echo 'Running static check'
-    - $(go env GOPATH)/bin/staticcheck -checks=all,-ST1000,-U1000 ./... || echo 'Static checks failed'
-    - echo 'Running vulnerability check'
-    - $(go env GOPATH)/bin/govulncheck ./... || echo 'Vulnerability checks failed'
+    - task: int_test
+      vars: { HANDLER: '|| echo ">>> Failed" ' }
     silent: true
 
   test_and_fail:
+    desc: Run tests on the project (fails if issues)
     cmds:
-    - echo 'Running tests'
-    - go test -json -v -coverprofile=coverage.out -cover ./... > results.json
-    - echo 'Running static check'
-    - $(go env GOPATH)/bin/staticcheck -checks=all,-ST1000,-U1000 ./...
-    - echo 'Running vulnerability check'
-    - $(go env GOPATH)/bin/govulncheck ./...
+    - task: int_test
     silent: true
 
   report:
@@ -103,16 +98,12 @@ tasks:
     desc: Prepare the code for build
     internal: true
     cmds:
-    - task: int_tools
     - echo 'Formatting source code'
     - gofmt -w -l .
     - echo 'Updating dependencies'
     - go mod tidy -diff
     - echo 'Verifying module'
     - go mod verify
-    - echo 'Vetting code'
-    - go vet ./...
-    - task: test
     silent: true
   
   int_build:
@@ -124,6 +115,22 @@ tasks:
     requires:
       vars: [ EXE ]
     silent: true
+
+  int_test:
+    desc: Run tests
+    cmds:
+    - task: int_tools
+    - echo 'Vetting code'
+    - go vet ./...
+    - echo 'Running unit tests'
+    - go test -json -v -coverprofile=coverage.out -cover ./... > results.json {{ .HANDLER}}
+    - echo 'Running static check'
+    - $(go env GOPATH)/bin/staticcheck -checks=all,-ST1000,-U1000 ./... {{ .HANDLER}}
+    - echo 'Running vulnerability check'
+    - $(go env GOPATH)/bin/govulncheck ./... {{ .HANDLER}}
+    silent: true
+    vars:
+      HANDLER: '{{ .HANDLER | default "" }}'
 
   int_tools:
     desc: Get required tools
