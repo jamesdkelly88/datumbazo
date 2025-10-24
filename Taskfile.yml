@@ -89,8 +89,6 @@ tasks:
     - go run .
     dir: '{{.USER_WORKING_DIR}}'
     silent: true
-    preconditions:
-    - sh '[[ "$PWD" =~ samples/ ]]'
 
 
   # Internal  
