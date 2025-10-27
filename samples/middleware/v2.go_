@@ -1,0 +1,100 @@
+package main 
+import ( 
+  "context" 
+  "fmt" 
+  "log" 
+  "net/http" 
+)
+// logRequest logs the request details including the username, during 
+// the response phase.
+func logRequest(r *http.Request, username string) { 
+	log.Printf("Request: method=%s, url=%s, user=%s", r.Method, 
+	r.URL.Path, username)
+}
+// LoggingMiddleware logs the details of every incoming request at 
+// the end of the response.
+func LoggingMiddleware(next http.Handler) http.Handler { return 
+	http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
+	{
+		// Create a custom ResponseWriter to capture the 
+		// response
+		loggingWriter := 
+		&LoggingResponseWriter{ResponseWriter: w, r: r}
+		// Call the next handler, which processes the request
+		next.ServeHTTP(loggingWriter, r)
+		// Now that the response has been written, we can log 
+		// it
+		username := r.Context().Value("username") if username 
+		== nil {
+			username = "anonymous"
+		}
+		logRequest(r, username.(string))
+	})
+}
+// LoggingResponseWriter captures the response status and body
+type LoggingResponseWriter struct { http.ResponseWriter r 
+	*http.Request
+}
+// WriteHeader is overridden to log the status code after writing the 
+// response.
+func (lrw *LoggingResponseWriter) WriteHeader(statusCode int) {
+	// We can log the status code here if needed
+	lrw.ResponseWriter.WriteHeader(statusCode)
+}
+// Write is overridden to capture the body content if needed
+func (lrw *LoggingResponseWriter) Write(p []byte) (int, error) {
+	// Log the response body if needed
+	return lrw.ResponseWriter.Write(p)
+}
+// BasicAuthMiddleware ensures requests contain valid basic 
+// authentication.
+func BasicAuthMiddleware(next http.Handler) http.Handler { return 
+	http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
+	{
+		// Check basic auth credentials
+		username, password, ok := r.BasicAuth()
+		// Set the username in context for unauthenticated or 
+		// authenticated users
+		var user string if !ok || username != "admin" || 
+		password != "password123" {
+			user = "anonymous"
+		} else {
+			user = username
+		}
+		// Set the username in the context
+		ctx := context.WithValue(r.Context(), "username", 
+		user) r = r.WithContext(ctx)
+		// If authentication fails, return Unauthorized 
+		// status
+		if user == "anonymous" { http.Error(w, 
+			"Unauthorized", http.StatusUnauthorized) 
+			return
+		}
+		// Continue to the next handler in the chain
+		next.ServeHTTP(w, r)
+	})
+}
+// HelloHandler is the main handler for our application.
+func HelloHandler(w http.ResponseWriter, r *http.Request) {
+	// Retrieve the username from the context
+	username := r.Context().Value("username") if username == nil 
+	{
+		username = "anonymous"
+	}
+	// Respond with a personalized message
+	fmt.Fprintf(w, "Hello, %s!", username)
+}
+func main() {
+	// Set up the HTTP router with middleware
+	mux := http.NewServeMux()
+	// Apply the middlewares: BasicAuthMiddleware first, then 
+	// LoggingMiddleware This ensures the request is logged at 
+	// the response phase, after authentication is handled
+	mux.Handle("/hello", 
+	LoggingMiddleware(BasicAuthMiddleware(http.HandlerFunc(HelloHandler))))
+	// Start the server
+	log.Println("Server starting on :8080...") if err := 
+	http.ListenAndServe(":8080", mux); err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
+}
