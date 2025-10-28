@@ -1,10 +1,15 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 )
+
+type ctxKey uint8
+
+const userKey ctxKey = 0
 
 type wrappedWriter struct {
 	http.ResponseWriter
@@ -16,25 +21,23 @@ func (w *wrappedWriter) WriteHeader(statusCode int) {
 	w.statusCode = statusCode
 }
 
-// TODO: with the basicauth middleware on the outside of the stack, any 401s and / 404s are not getting logged
-//       so need to remove the username context check from here and use it in the real handlers when checking permissions
-//       this function should just be able to get the username from the header same as the BasicAuth middleware does
-
 func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-
-		username, _, ok := r.BasicAuth()
-
-		if !ok {
-			username = "-"
-		}
-
+		fmt.Println("Logging middleware") // TODO: convert to trace log
 		wrapped := &wrappedWriter{
 			ResponseWriter: w,
 			statusCode:     http.StatusOK,
 		}
+		user := new(User)
+		r = r.WithContext(context.WithValue(r.Context(), userKey, user))
 		next.ServeHTTP(wrapped, r)
-		fmt.Println(wrapped.statusCode, r.Method, r.URL.Path, username, time.Since(start))
+		if user.Name == "" {
+			user.Name = "-"
+		}
+		if user.Access == "" {
+			user.Access = "None"
+		}
+		fmt.Println(wrapped.statusCode, r.Method, r.URL.Path, user.Name, user.Access, time.Since(start))
 	})
 }
