@@ -1,3 +1,3 @@
 module example.com/middleware
 
-go 1.24.9
+go 1.24.0
