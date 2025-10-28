@@ -8,48 +8,52 @@ import (
 	"time"
 )
 
-type LoggingResponseWriter struct {
-	http.ResponseWriter
-	r *http.Request
+type User struct {
+	Name string
 }
 
-func logRequest(r *http.Request, start time.Time) {
-	log.Printf("Request: method=%s, url=%s, user=%s, duration=%v", r.Method, r.URL.Path, r.Context().Value("username"), time.Since(start))
+func logRequest(r *http.Request, start time.Time, username string) {
+	log.Printf("Request: method=%s, url=%s, user=%s, duration=%v", r.Method, r.URL.Path, username, time.Since(start))
 }
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		lrw := &LoggingResponseWriter{ResponseWriter: w, r: r}
 		log.Println("Logging middleware inbound")
-		log.Printf("%s\n", r.Context().Value("username"))
-		next.ServeHTTP(lrw, r)
+		user := new(User)
+		r = r.WithContext(context.WithValue(r.Context(), "user", user))
+		next.ServeHTTP(w, r)
 		log.Println("Logging middleware outbound")
-		log.Printf("%s\n", r.Context().Value("username"))
-		logRequest(lrw.r, start)
+		log.Printf("%s\n", user.Name)
+		logRequest(r, start, user.Name)
 	})
 }
 
 func BasicAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Auth middleware inbound")
-		log.Printf("%s\n", r.Context().Value("username"))
+		log.Printf("%v\n", r.Context().Value("user"))
 		var username, _, ok = r.BasicAuth()
 		if !ok || username == "" {
 			username = "anonymous"
 		}
-		ctx := context.WithValue(r.Context(), "username", username)
-		r = r.WithContext(ctx)
+		user, ok := r.Context().Value("user").(*User)
+		if ok {
+			user.Name = username
+		}
 		next.ServeHTTP(w, r)
 		log.Println("Auth middleware outbound")
-		log.Printf("%s\n", r.Context().Value("username"))
+		log.Printf("%v\n", r.Context().Value("user"))
 	})
 }
 
 func HelloHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Hello handler start")
-	username := r.Context().Value("username")
-	if username == nil {
+	var username string
+	user, ok := r.Context().Value("user").(*User)
+	if ok {
+		username = user.Name
+	} else {
 		username = "anonymous (at handler)"
 	}
 	fmt.Fprintf(w, "Hello, %s!\n", username)
