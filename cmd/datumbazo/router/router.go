@@ -20,7 +20,7 @@ func Serve(listen string, settings cfg.Settings) {
 		{"/", h.Root, true},
 		{"GET /favicon.ico", h.Favicon, false},
 		{"GET /healthz", h.Health, false},
-		{"GET /version", h.Version, true},
+		{"GET /version", h.Version(settings.Version), true},
 	}
 
 	router := http.NewServeMux()

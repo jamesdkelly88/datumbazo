@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/jamesdkelly88/datumbazo/internal/config"
 )
 
 //go:embed favicon.ico
@@ -26,6 +29,13 @@ func Root(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Version(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Version from config here") // TODO: get config in here
+func Version(ver config.Version) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		bytes, err := json.Marshal(ver)
+		if err == nil {
+			fmt.Fprint(w, string(bytes))
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}
 }
