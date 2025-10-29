@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	h "github.com/jamesdkelly88/datumbazo/cmd/datumbazo/handlers"
@@ -25,8 +26,8 @@ func Serve(listen string, settings cfg.Settings) {
 
 	router := http.NewServeMux()
 
-	publicChain := mw.Chain{mw.Logging}
-	authChain := mw.Chain{mw.Logging, mw.BasicAuth}
+	publicChain := mw.Chain{mw.Logging, mw.RequestID}
+	authChain := mw.Chain{mw.Logging, mw.RequestID, mw.BasicAuth}
 
 	for _, r := range routes {
 		if r.authenticated {
@@ -41,6 +42,6 @@ func Serve(listen string, settings cfg.Settings) {
 		Handler: router,
 	}
 	// start server
-	fmt.Printf("Starting server on %s\n", server.Addr) // TODO: central logging
+	slog.Info(fmt.Sprintf("Starting server on %s", server.Addr))
 	server.ListenAndServe()
 }

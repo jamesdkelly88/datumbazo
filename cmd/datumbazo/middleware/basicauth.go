@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
+	"log/slog"
 	"net/http"
 )
 
@@ -21,7 +21,7 @@ func Authenticate(username string, password string) (string, error) {
 
 func BasicAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("BasicAuth middleware") // TODO: convert to trace log
+		slog.Debug("BasicAuth middleware") // TODO: convert to trace log
 
 		// get basic auth credentials
 		var username, password, ok1 = r.BasicAuth()

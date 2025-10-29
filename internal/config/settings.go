@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"os/user"
 
 	flag "github.com/spf13/pflag"
@@ -16,12 +17,14 @@ type Settings struct {
 	Server struct {
 		Listen string
 	}
-	Version Version
+	Version  Version
+	LogLevel slog.Level
 }
 
 func NewSettings(server bool) Settings {
 	settings := Settings{}
 	settings.Version = GetVersion(server)
+	settings.LogLevel = slog.LevelDebug // TODO: add flag
 
 	if server {
 		serverSettings(&settings)
