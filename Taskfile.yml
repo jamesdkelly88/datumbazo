@@ -28,6 +28,8 @@ tasks:
       vars: { EXE: 'datumbazo' }
     - task: int_build
       vars: { EXE: 'dbzo' }
+    - task: int_build
+      vars: { EXE: 'tokeniser' }
     - task: report
 
   build-client:
@@ -50,6 +52,16 @@ tasks:
     - task: int_prep
     - task: int_build
       vars: { EXE: 'datumbazo' }
+  build-tokeniser:
+    desc: Build the tokeniser test app
+    aliases:
+    - bt
+    - build-tkn
+    - tkn
+    cmds:
+    - task: int_prep
+    - task: int_build
+      vars: { EXE: 'tokeniser' }
 
   test_and_pass:
     desc: Run tests on the project (always succeeds)

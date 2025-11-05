@@ -5,6 +5,9 @@ datumbazo.exe
 dbzo
 !dbzo/
 dbzo.exe
+tokeniser
+!tokeniser/
+tokeniser.exe
 
 # mac
 .DS_Store

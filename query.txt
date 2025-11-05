@@ -1,0 +1,4 @@
+SELECT *
+FROM EXAMPLE
+WHERE (X=4) --line comment
+ORDER BY 1
