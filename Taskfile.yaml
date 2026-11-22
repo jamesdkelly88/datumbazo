@@ -1,0 +1,26 @@
+version: '3'
+
+tasks:
+
+  # Task
+
+  hello:
+    cmds:
+      - echo "Hello from task"
+    silent: true
+
+  list:
+    desc: List all tasks
+    cmds:
+    - task --list
+    silent: true
+
+  build:
+    desc: Build application
+    cmds:
+    - gofmt -w .
+    - go mod tidy
+    - go mod verify
+    - go test -cover
+    - go build -o dbzo
+    silent: true

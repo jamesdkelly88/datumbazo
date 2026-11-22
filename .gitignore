@@ -12,6 +12,9 @@ tokeniser.exe
 # mac
 .DS_Store
 
+# secrets
+.env
+
 # go
 coverage.out
 coverage.tmp

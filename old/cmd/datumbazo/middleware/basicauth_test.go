@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"testing"
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"context"
-	"fmt"
+	"testing"
 )
 
 // TestAuthenticate tests the Authenticate function
